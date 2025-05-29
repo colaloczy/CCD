@@ -13,6 +13,7 @@ import nltk
 nltk.download('stopwords')
 from nltk.corpus import stopwords
 
+# The dataset is under the master branch, decompress id2sourcecode into the dataset folder.
 def lda_similarity(group1, group2, num_topics=5):
     """计算两个字符串列表的LDA主题相似性"""
     
