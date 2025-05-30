@@ -40,24 +40,24 @@ Our model achieves the following performance on :
 
 ### [Code Clone Detection on BigCloneBench](https://github.com/clonebench/BigCloneBench)
 
-| Model name | F1   | Prec. | Recall |             
-|------------|------|-------|--------|
-| Ours       | 0.86 | 0.89  | 0.84   |
+| Model name | F1   | Prec. | Recall | Execution Time |         
+|------------|------|-------|--------|----------------|
+| Ours       | 0.86 | 0.89  | 0.84   | 3,738s         |
 
 ### [Code Clone Detection on POJ-104](https://github.com/microsoft/CodeXGLUE/tree/main/Code-Code/Clone-detection-POJ-104)
 
-| Model name | F1   | Prec. | Recall |             
-|------------|------|-------|--------|
-| Ours       | 0.75 | 0.79  | 0.71   |
+| Model name | F1   | Prec. | Recall | Execution Time |           
+|------------|------|-------|--------|----------------|
+| Ours       | 0.75 | 0.79  | 0.71   | 1,436s         |
 
 ### [Code Clone Detection on Project_CodeNet](https://github.com/IBM/Project_CodeNet)
 
 #### Python
-| Model name | F1   | Prec. | Recall |             
-|------------|------|-------|--------|
-| Ours       | 0.82 | 0.84  | 0.80   |
+| Model name | F1   | Prec. | Recall | Execution Time |       
+|------------|------|-------|--------|----------------|
+| Ours       | 0.82 | 0.84  | 0.80   | 1,077s         | 
 
 #### C#
-| Model name | F1   | Prec. | Recall |             
-|------------|------|-------|--------|
-| Ours       | 0.81 | 0.81  | 0.81   |
+| Model name | F1   | Prec. | Recall | Execution Time |          
+|------------|------|-------|--------|----------------|
+| Ours       | 0.81 | 0.81  | 0.81   | 1,477s         |
