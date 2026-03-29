@@ -87,6 +87,7 @@ def compute_pair(args):
 
 def main():
     inputcsv = "dataset/nonclone.csv"
+    # inputcsv = "dataset/clone.csv"
     source_root = "dataset/id2sourcecode/"
 
     pairs = pd.read_csv(inputcsv, header=None)
