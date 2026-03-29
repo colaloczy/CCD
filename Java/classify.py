@@ -1,6 +1,9 @@
+from sklearn.ensemble import VotingClassifier
+import argparse
 import csv
 from itertools import islice
 import numpy as np
+import pandas as pd
 import random
 from sklearn.model_selection import train_test_split, KFold
 from sklearn.metrics import f1_score, precision_score, recall_score
@@ -11,90 +14,54 @@ from sklearn.ensemble import BaggingClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import StackingClassifier
+import warnings
+warnings.filterwarnings('ignore')
+def parse_options():
+    parser = argparse.ArgumentParser(description='Malware Detection.')
+    parser.add_argument('-d', '--dir', help='The path of a dir contains benign and malware feature csv.', required=True, type=str)
+    parser.add_argument('-o', '--out', help='The dir_path of output', required=True, type=str)
+    args = parser.parse_args()
+    return args
 
-
-def feature_extraction_all(feature_csv, feature_indexes=None):
-    """Extract features from CSV.
+def load_dataset(clone_csv, nonclone_csv):
+    # Load data with specific column names
+    df_clone = pd.read_csv(clone_csv)
+    df_non = pd.read_csv(nonclone_csv)
     
-    Args:
-        feature_csv: Path to the CSV file containing features
-        feature_indexes: List of feature indexes to extract. If None, extract all features.
-                        Feature indexes are 0-based relative to the feature columns
-                        (i.e., starting from column 2 in the CSV)
+    # Ensure we have the correct columns
+    feature_columns = ['Jaccard',  'Levenshtein', 'LDA', 'LenRatio']
+    df_clone = df_clone[feature_columns + ['Label']]
+    df_non = df_non[feature_columns + ['Label']]
     
-    Returns:
-        List of feature vectors
-    """
-    features = []
-    with open(feature_csv, 'r') as f:
-        data = csv.reader(f)
-        # Optional: Read header row to get feature names
-        # header = next(data)
-        # feature_names = header[2:]  # Skip the first two columns
-        next(data)  # Skip header row
-        
-        for line in islice(data, 0, None):
-            try:
-                if feature_indexes is None:
-                    # Extract all features (original behavior)
-                    feature_last = [float(i) for i in line[2:]]
-                else:
-                    # Extract only the specified features
-                    all_features = [float(i) for i in line[2:]]
-                    feature_last = [all_features[idx] for idx in feature_indexes]
-                features.append(feature_last)
-            except Exception as e:
-                # print(f"Error processing line: {e}")
-                pass
-    print('len of features:', len(features))
-    print(features[:5])
-    return features
+    df = pd.concat([df_clone, df_non], ignore_index=True)
+    df = df.sample(frac=1, random_state=42).reset_index(drop=True)
+    
+    return df
 
 def obtain_dataset(dir_path):
-    print("--------------------------------------all--------------------------------------")
-    nonclone_featureCSV = dir_path + 'nonclone_token_JaccardJaroLeven-RaLDA.csv'
-    clone_featureCSV = dir_path + 'clone_token_JaccardJaroLeven-RaLDA.csv'
+    print("----------------------------------------------------------------------------")
+    nonclone_featureCSV = dir_path + 'java_nonclone_features_global_lda.csv'
+    clone_featureCSV = dir_path + 'java_allclone_features_global_lda.csv'
 
-    Vectors = []
-    Labels = []
+    # Load and process dataset
+    df = load_dataset(clone_featureCSV, nonclone_featureCSV)
+    
+    # Separate features and labels
+    feature_columns = ['Jaccard',  'Levenshtein', 'LDA', 'LenRatio']
+    Vectors = df[feature_columns].values.tolist()
+    Labels = df['Label'].values.tolist()
 
-    feacture_indexs = [0,1,2,3]
-    """
-    0     -   t1_sim Jaccard
-    1     -   t3_sim Jaro
-    2     -   t6_sim Leven-ratio
-    3     -   t9_sim Lda
-    """
-    nonclone_features = feature_extraction_all(nonclone_featureCSV, feacture_indexs)
-    clone_features = feature_extraction_all(clone_featureCSV, feacture_indexs)
-
-    Vectors.extend(nonclone_features)
-    Labels.extend([0 for _ in range(len(nonclone_features))])
-
-    Vectors.extend(clone_features)
-    Labels.extend([1 for _ in range(len(clone_features))])
-
-    print('len of Vectors:', len(Vectors))
+    print('\nlen of Vectors:', len(Vectors))
     print('len of Labels:', len(Labels))
 
     return Vectors, Labels
-
-def random_features(vectors, labels):
-    Vec_Lab = []
-    for i in range(len(vectors)):
-        vec = vectors[i]
-        lab = labels[i]
-        vec.append(lab)
-        Vec_Lab.append(vec)
-    random.shuffle(Vec_Lab)
-    return [m[:-1] for m in Vec_Lab], [m[-1] for m in Vec_Lab]
 
 def ensemble_models(vectors, labels):
     X = np.array(vectors)
     Y = np.array(labels)
     
-    # 初始化5折交叉验证
-    kf = KFold(n_splits=5, shuffle=True, random_state=42)
+    # Initialize 10-fold cross validation
+    kf = KFold(n_splits=10, shuffle=True, random_state=42)
     model_metrics = {
         'RandomForestClassifier': {'F1s': [], 'Precisions': [], 'Recalls': [], 'Times': []},
         'XGBClassifier': {'F1s': [], 'Precisions': [], 'Recalls': [], 'Times': []},
@@ -103,11 +70,11 @@ def ensemble_models(vectors, labels):
     }
 
     for fold, (train_index, test_index) in enumerate(kf.split(X), 1):
-        print(f"\nFold {fold}/5")
+        print(f"\nFold {fold}/10")
         train_X, train_Y = X[train_index], Y[train_index]
         test_X, test_Y = X[test_index], Y[test_index]
 
-        # 每个fold重新初始化模型
+        # Initialize models for each fold
         rf_model = RandomForestClassifier(max_depth=32, random_state=42)
         xgb_model = XGBClassifier(learning_rate=0.2, max_depth=32, n_estimators=200, 
                                  use_label_encoder=False, eval_metric='logloss')
@@ -127,11 +94,11 @@ def ensemble_models(vectors, labels):
             cv=3
         )
 
-        # 训练并评估每个模型
+        # Train and evaluate each model
         for model in [rf_model, xgb_model, bagging_model, stacking_model]:
-            start_time = time.time()  # 新增计时开始
+            start_time = time.time()
             model.fit(train_X, train_Y)
-            elapsed = time.time() - start_time  # 计算耗时
+            elapsed = time.time() - start_time
             
             y_pred = model.predict(test_X)
             f1 = f1_score(test_Y, y_pred)
@@ -142,11 +109,11 @@ def ensemble_models(vectors, labels):
             model_metrics[model_name]['F1s'].append(f1)
             model_metrics[model_name]['Precisions'].append(precision)
             model_metrics[model_name]['Recalls'].append(recall)
-            model_metrics[model_name]['Times'].append(elapsed)  # 记录时间
+            model_metrics[model_name]['Times'].append(elapsed)
             
             print(f"{model_name} - Time: {elapsed:.2f}s | F1: {f1:.4f}, Precision: {precision:.4f}, Recall: {recall:.4f}")
 
-    # 输出平均结果（添加时间统计）
+    # Output average results
     print("\nAverage Results for Each Model:")
     for model_name in model_metrics:
         f1_mean = np.mean(model_metrics[model_name]['F1s'])
@@ -162,14 +129,12 @@ def ensemble_models(vectors, labels):
         print(f"F1: {f1_mean:.4f} ± {f1_std:.4f}")
         print(f"Precision: {precision_mean:.4f} ± {precision_std:.4f}")
         print(f"Recall: {recall_mean:.4f} ± {recall_std:.4f}")
-        print(f"Training Time: {time_mean:.2f}s ± {time_std:.2f}s")  # 新增时间输出
+        print(f"Training Time: {time_mean:.2f}s ± {time_std:.2f}s")
         
-def main1():
-    print("-------------------------------------jaccardjaroleven-ratiolda-------------------------------------")
-    print("--------------------------------------main--------------------------------------")
-    dir_path = '/Java/'
-    Vectors, Labels = obtain_dataset(dir_path)
-    vectors, labels = random_features(Vectors, Labels)
+def main():
+    print("--------------------------------------main------------------------------------")
+    dir_path = 'java-bcb/'
+    vectors, labels = obtain_dataset(dir_path)
 
     start = time.time()
     ensemble_models(vectors, labels)
@@ -177,4 +142,4 @@ def main1():
     print("\nTotal time:", end - start)
 
 if __name__ == '__main__':
-    main1()
+    main()
