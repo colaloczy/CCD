@@ -58,7 +58,6 @@ def ensemble_models(X, y):
         train_X, test_X = X[train_index], X[test_index]
         train_Y, test_Y = y[train_index], y[test_index]
         
-        # 1. 
         print("\n1. Training RandomForest...")
         rf_model = RandomForestClassifier(max_depth=32, random_state=42)
         
@@ -87,7 +86,6 @@ def ensemble_models(X, y):
               f"Recall: {recall:.4f}, Train Time: {rf_train_time:.4f}s, "
               f"Predict Time: {rf_predict_time:.4f}s, Total Time: {rf_total_time:.4f}s")
         
-        # 2. 
         print("\n2. Training XGBoost...")
         xgb_model = XGBClassifier(
             learning_rate=0.2, 
@@ -122,7 +120,6 @@ def ensemble_models(X, y):
               f"Recall: {recall:.4f}, Train Time: {xgb_train_time:.4f}s, "
               f"Predict Time: {xgb_predict_time:.4f}s, Total Time: {xgb_total_time:.4f}s")
         
-        # 3. 
         print("\n3. Training Bagging...")
         bagging_model = BaggingClassifier(
             base_estimator=DecisionTreeClassifier(max_depth=32, random_state=42),
@@ -157,7 +154,6 @@ def ensemble_models(X, y):
               f"Recall: {recall:.4f}, Train Time: {bagging_train_time:.4f}s, "
               f"Predict Time: {bagging_predict_time:.4f}s, Total Time: {bagging_total_time:.4f}s")
         
-        # 4. 
         print("\n4. Training Stacking...")
         stacking_model = StackingClassifier(
             estimators=[
