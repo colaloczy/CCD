@@ -69,7 +69,6 @@ def compute_pair(args):
     t2 = get_java_tokens(f2)
 
     jac = jaccard_sim(t1, t2)
-    # jaro = jaro_sim(t1, t2)
     lev = levenshtein_ratio(t1, t2)
 
     v1 = topic_matrix[index[f1]]
@@ -77,7 +76,6 @@ def compute_pair(args):
     lda_sim = cosine_similarity([v1], [v2])[0][0]
 
     len_ratio = len(t1) / (len(t2) + 1e-6)
-    # rename_ratio = 1 - jac
 
     return [
         jac,lev, lda_sim,
