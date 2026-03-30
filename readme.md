@@ -1,6 +1,6 @@
-# Learning to Combine Similarities: A Heterogeneous Ensemble Framework for Code Clone Detection
+# Multi-View Similarity and Ensemble Learning for Multi-Language Code Clone Detection
 
-This repository is the official implementation of [Learning to Combine Similarities: A Heterogeneous Ensemble Framework for Code Clone Detection](). The principle is shown in the figure below.
+This repository is the official implementation of [Multi-View Similarity and Ensemble Learning for Multi-Language Code Clone Detection](). The principle is shown in the figure below.
 <img src="approach.png" alt="Code Clone Detection Approach" width="800" title="Code Clone Detection Approach"> 
 ## Requirements
 
